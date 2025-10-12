@@ -5,6 +5,9 @@ description = "Hardware-agnostic quantum simulation and materials toolkit"
 authors = [ { name = "QuMater Contributors" } ]
 license = { file = "LICENSE" }
 readme = "README.md"
+dependencies = [
+    "numpy>=1.24",
+]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
