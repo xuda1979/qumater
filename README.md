@@ -11,6 +11,7 @@ QuMater 聚合了轻量却表达力十足的构件，用于搭建硬件无关的
 - `qumater.materials` 提供演示用材料数据库与 Hubbard 晶格工具，可作为模拟基准的起点。
 - `qumater.qsim` 实现了 Pauli 哈密顿量辅助函数、可交换项分组（带缓存矩阵加速）以及基于 Fubini–Study 度量的低深度 VQE 求解器。
 - `qumater.qsim.modules` 提供量子算法模块注册表，可发现通过 `entry_points` 发布的第三方算法。
+- `qumater.qsim.algorithms` 现内置 Grover 搜索、量子傅里叶变换 (QFT) 与量子相位估计 (QPE) 等经典算法实现，可直接通过模块注册表获取并运行。
 - 材料目录提供 `summary()` 辅助方法，可直接生成用于可视化或 API 的序列化视图。
 - `PauliHamiltonian` 现支持对密度矩阵求期望值，便于混合态或实验测量数据的分析。
 

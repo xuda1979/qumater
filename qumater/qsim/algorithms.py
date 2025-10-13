@@ -1,8 +1,17 @@
-"""Variational quantum algorithms with natural gradient support."""
+"""Reference implementations of established quantum algorithms.
+
+The module started out focusing on variational algorithms inspired by
+Phasecraft's hardware agnostic research.  To make the package more useful as a
+general algorithm hub we now expose a curated collection of well-known
+algorithms alongside the existing VQE optimiser.  Each implementation favours
+clarity over micro-optimisations so that new contributions can follow the same
+patterns and easily register themselves as modules via
+``qumater.qsim.modules``.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import Callable, Iterable, List, Optional, Sequence
 
 import numpy as np
 
@@ -18,6 +27,32 @@ class OptimizationHistory:
     parameters: List[np.ndarray]
     energies: List[float]
     converged: bool
+
+
+@dataclass
+class GroverResult:
+    """Result of a Grover search iteration."""
+
+    probabilities: np.ndarray
+
+    def most_likely_state(self) -> int:
+        """Return the computational basis state with the highest probability."""
+
+        return int(np.argmax(self.probabilities))
+
+
+@dataclass
+class PhaseEstimationResult:
+    """Outcome of a quantum phase estimation run."""
+
+    phase: float
+    binary: str
+
+    @property
+    def decimal(self) -> float:
+        r"""Return the phase estimate expressed as a fraction of :math:`2\pi`."""
+
+        return self.phase
 
 
 class LowDepthVQE:
@@ -148,4 +183,221 @@ register_algorithm_module(
 )
 
 
-__all__ = ["LowDepthVQE", "OptimizationHistory", "_low_depth_vqe_factory"]
+class GroverSearch:
+    """Classical simulator for Grover's search algorithm.
+
+    Parameters
+    ----------
+    num_qubits:
+        Size of the search space in qubits.
+    oracle:
+        Either a callable returning ``True`` for marked states or an iterable of
+        marked indices.
+    iterations:
+        Number of Grover iterations.  When omitted the canonical optimal count
+        is used based on the number of marked states.
+    """
+
+    def __init__(
+        self,
+        *,
+        num_qubits: int,
+        oracle: Callable[[int], bool] | Iterable[int],
+        iterations: Optional[int] = None,
+    ) -> None:
+        if num_qubits < 1:
+            raise ValueError("num_qubits must be positive")
+
+        self.num_qubits = int(num_qubits)
+        self.dimension = 2**self.num_qubits
+        self._oracle_phase = np.ones(self.dimension, dtype=float)
+
+        if callable(oracle):
+            marked_indices = [index for index in range(self.dimension) if oracle(index)]
+        else:
+            marked_indices = list(dict.fromkeys(int(idx) for idx in oracle))
+
+        if not marked_indices:
+            raise ValueError("GroverSearch requires at least one marked state")
+
+        for index in marked_indices:
+            if index < 0 or index >= self.dimension:
+                raise ValueError(
+                    f"Marked state index {index} is outside the {self.dimension}-dimensional space"
+                )
+            self._oracle_phase[index] = -1.0
+
+        solution_ratio = len(marked_indices) / self.dimension
+        if iterations is None:
+            theta = np.arcsin(np.sqrt(solution_ratio))
+            optimal = int(max(1, round((np.pi / (4 * theta)) - 0.5)))
+            self.iterations = optimal
+        else:
+            self.iterations = int(iterations)
+            if self.iterations < 1:
+                raise ValueError("iterations must be positive")
+
+    def run(self) -> GroverResult:
+        """Execute Grover iterations and return the resulting probabilities."""
+
+        state = np.ones(self.dimension, dtype=complex) / np.sqrt(self.dimension)
+        diffusion = (2.0 / self.dimension) * np.ones((self.dimension, self.dimension)) - np.eye(
+            self.dimension, dtype=complex
+        )
+
+        oracle_matrix = np.diag(self._oracle_phase.astype(complex))
+        for _ in range(self.iterations):
+            state = oracle_matrix @ state
+            state = diffusion @ state
+
+        probabilities = np.abs(state) ** 2
+        return GroverResult(probabilities=probabilities)
+
+
+def _grover_search_factory(
+    *, num_qubits: int, oracle: Callable[[int], bool] | Iterable[int], iterations: Optional[int] = None
+) -> GroverSearch:
+    return GroverSearch(num_qubits=num_qubits, oracle=oracle, iterations=iterations)
+
+
+register_algorithm_module(
+    AlgorithmModule(
+        name="grover_search",
+        summary="Grover amplitude amplification over a black-box oracle.",
+        factory=_grover_search_factory,
+        keywords=("search", "amplitude-amplification", "grover"),
+        package=__name__,
+    ),
+    overwrite=True,
+)
+
+
+class QuantumFourierTransform:
+    """Discrete quantum Fourier transform implemented via FFT."""
+
+    def __init__(self, *, num_qubits: int) -> None:
+        if num_qubits < 1:
+            raise ValueError("num_qubits must be positive")
+        self.num_qubits = int(num_qubits)
+        self.dimension = 2**self.num_qubits
+
+    def run(self, state: Sequence[complex]) -> np.ndarray:
+        """Apply the QFT to ``state`` and return the transformed amplitudes."""
+
+        amplitudes = np.asarray(state, dtype=complex)
+        if amplitudes.size != self.dimension:
+            raise ValueError(
+                f"Expected a state with {self.dimension} amplitudes, received {amplitudes.size}"
+            )
+        transformed = np.fft.fft(amplitudes) / np.sqrt(self.dimension)
+        return transformed
+
+    def inverse(self, state: Sequence[complex]) -> np.ndarray:
+        """Apply the inverse QFT to ``state``."""
+
+        amplitudes = np.asarray(state, dtype=complex)
+        if amplitudes.size != self.dimension:
+            raise ValueError(
+                f"Expected a state with {self.dimension} amplitudes, received {amplitudes.size}"
+            )
+        transformed = np.fft.ifft(amplitudes) * np.sqrt(self.dimension)
+        return transformed
+
+
+def _qft_factory(*, num_qubits: int) -> QuantumFourierTransform:
+    return QuantumFourierTransform(num_qubits=num_qubits)
+
+
+register_algorithm_module(
+    AlgorithmModule(
+        name="quantum_fourier_transform",
+        summary="Quantum Fourier transform over computational basis states.",
+        factory=_qft_factory,
+        keywords=("qft", "fourier"),
+        package=__name__,
+    ),
+    overwrite=True,
+)
+
+
+class QuantumPhaseEstimation:
+    """Estimate the eigenphase of a unitary given one of its eigenstates."""
+
+    def __init__(
+        self,
+        *,
+        unitary: np.ndarray,
+        eigenstate: Sequence[complex],
+        precision_qubits: int,
+    ) -> None:
+        if precision_qubits < 1:
+            raise ValueError("precision_qubits must be positive")
+
+        unitary = np.asarray(unitary, dtype=complex)
+        if unitary.ndim != 2 or unitary.shape[0] != unitary.shape[1]:
+            raise ValueError("unitary must be a square matrix")
+
+        eigenstate = np.asarray(eigenstate, dtype=complex)
+        if eigenstate.ndim != 1:
+            raise ValueError("eigenstate must be a vector")
+        if eigenstate.size != unitary.shape[0]:
+            raise ValueError("eigenstate dimension must match unitary")
+
+        norm = np.linalg.norm(eigenstate)
+        if norm == 0:
+            raise ValueError("eigenstate must be non-zero")
+
+        self.unitary = unitary
+        self.eigenstate = eigenstate / norm
+        self.precision_qubits = int(precision_qubits)
+        self.dimension = unitary.shape[0]
+
+    def run(self) -> PhaseEstimationResult:
+        """Return a phase estimate rounded to ``precision_qubits`` bits."""
+
+        evolved = self.unitary @ self.eigenstate
+        overlap = np.vdot(self.eigenstate, evolved)
+        if np.isclose(np.linalg.norm(evolved), 0.0):
+            raise RuntimeError("Unitary produced a zero vector")
+
+        phase_fraction = (np.angle(overlap) / (2 * np.pi)) % 1.0
+        scaling = 2**self.precision_qubits
+        discrete = int(np.floor(phase_fraction * scaling + 0.5)) % scaling
+        estimate = discrete / scaling
+        binary = format(discrete, f"0{self.precision_qubits}b")
+        return PhaseEstimationResult(phase=estimate, binary=binary)
+
+
+def _qpe_factory(
+    *, unitary: np.ndarray, eigenstate: Sequence[complex], precision_qubits: int
+) -> QuantumPhaseEstimation:
+    return QuantumPhaseEstimation(
+        unitary=unitary, eigenstate=eigenstate, precision_qubits=precision_qubits
+    )
+
+
+register_algorithm_module(
+    AlgorithmModule(
+        name="quantum_phase_estimation",
+        summary="Canonical Kitaev-style quantum phase estimation.",
+        factory=_qpe_factory,
+        keywords=("qpe", "phase", "estimation"),
+        package=__name__,
+    ),
+    overwrite=True,
+)
+
+
+__all__ = [
+    "GroverResult",
+    "GroverSearch",
+    "LowDepthVQE",
+    "OptimizationHistory",
+    "PhaseEstimationResult",
+    "QuantumFourierTransform",
+    "QuantumPhaseEstimation",
+    "_grover_search_factory",
+    "_low_depth_vqe_factory",
+    "_qft_factory",
+    "_qpe_factory",
+]

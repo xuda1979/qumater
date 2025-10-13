@@ -1,7 +1,15 @@
 """Quantum simulation utilities inspired by hardware-agnostic SOTA methods."""
 
 from .ansatz import HardwareAgnosticAnsatz
-from .algorithms import LowDepthVQE, OptimizationHistory
+from .algorithms import (
+    GroverResult,
+    GroverSearch,
+    LowDepthVQE,
+    OptimizationHistory,
+    PhaseEstimationResult,
+    QuantumFourierTransform,
+    QuantumPhaseEstimation,
+)
 from .hamiltonian import PauliHamiltonian, PauliTerm, group_commuting_terms
 from .modules import (
     AlgorithmModule,
@@ -14,8 +22,13 @@ from .modules import (
 
 __all__ = [
     "HardwareAgnosticAnsatz",
+    "GroverResult",
+    "GroverSearch",
     "LowDepthVQE",
     "OptimizationHistory",
+    "PhaseEstimationResult",
+    "QuantumFourierTransform",
+    "QuantumPhaseEstimation",
     "PauliHamiltonian",
     "PauliTerm",
     "group_commuting_terms",
