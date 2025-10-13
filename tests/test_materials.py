@@ -33,3 +33,17 @@ def test_database_filter_allows_semantic_and_numeric_constraints():
     # Open ended bounds should act as inclusive filters and exclude missing parameters.
     strongly_correlated = db.filter(parameter_bounds={"u": (4.0, 4.0)})
     assert [entry.name for entry in strongly_correlated] == ["Fermi-Hubbard 2x2"]
+
+
+def test_summary_returns_serialisable_view():
+    db = QuantumMaterialDatabase.demo()
+    summary = db.summary()
+    assert [item["name"] for item in summary] == [
+        "Fermi-Hubbard 2x2",
+        "FeSe monolayer",
+        "LiH minimal basis",
+    ]
+    fe_se = summary[1]
+    fe_se["parameters"]["Tc"] = 70.0
+    # The original entry should remain unchanged because the summary returns copies.
+    assert db.get("FeSe monolayer").parameters["Tc"] == 65.0

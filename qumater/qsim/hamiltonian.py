@@ -81,6 +81,18 @@ class PauliHamiltonian:
         self._terms = terms
         self._matrix_cache: np.ndarray | None = None
 
+        groups = group_commuting_terms(self._terms)
+        self._commuting_groups = tuple(tuple(group) for group in groups)
+
+        dim = 2**self._num_qubits
+        group_matrices: List[np.ndarray] = []
+        for group in self._commuting_groups:
+            matrix = np.zeros((dim, dim), dtype=complex)
+            for term in group:
+                matrix += term.matrix()
+            group_matrices.append(matrix)
+        self._group_matrices = tuple(group_matrices)
+
     @property
     def terms(self) -> Sequence[PauliTerm]:
         return tuple(self._terms)
@@ -89,11 +101,17 @@ class PauliHamiltonian:
     def num_qubits(self) -> int:
         return self._num_qubits
 
+    @property
+    def commuting_groups(self) -> Sequence[Sequence[PauliTerm]]:
+        """Return the cached mutually commuting term groups."""
+
+        return self._commuting_groups
+
     def matrix(self) -> np.ndarray:
         if self._matrix_cache is None:
             matrix = np.zeros((2**self._num_qubits, 2**self._num_qubits), dtype=complex)
-            for term in self._terms:
-                matrix += term.matrix()
+            for group_matrix in self._group_matrices:
+                matrix += group_matrix
             self._matrix_cache = matrix
         return self._matrix_cache
 
@@ -103,13 +121,29 @@ class PauliHamiltonian:
         state = np.asarray(state, dtype=complex)
         if state.ndim != 1 or state.size != 2**self._num_qubits:
             raise ValueError("State has incompatible shape")
-        groups = group_commuting_terms(self._terms)
         energy = 0.0
-        for group in groups:
-            matrix = np.zeros((state.size, state.size), dtype=complex)
-            for term in group:
-                matrix += term.matrix()
+        for matrix in self._group_matrices:
             energy += np.real(np.vdot(state, matrix @ state))
+        return float(energy)
+
+    def expectation_density(self, density: np.ndarray) -> float:
+        """Return ``Tr(ρH)`` for a density matrix ``ρ``.
+
+        The helper covers hybrid quantum-classical workflows where measurement
+        outcomes are post-processed into a density operator before evaluating the
+        Hamiltonian expectation value.
+        """
+
+        density = np.asarray(density, dtype=complex)
+        dim = 2**self._num_qubits
+        if density.shape != (dim, dim):
+            raise ValueError("Density matrix has incompatible shape")
+        if not np.allclose(density, density.conjugate().T):
+            raise ValueError("Density matrix must be Hermitian")
+
+        energy = 0.0
+        for matrix in self._group_matrices:
+            energy += np.real(np.trace(density @ matrix))
         return float(energy)
 
     def apply(self, state: np.ndarray) -> np.ndarray:
