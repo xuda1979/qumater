@@ -10,6 +10,7 @@ QuMater 聚合了轻量却表达力十足的构件，用于搭建硬件无关的
 
 - `qumater.materials` 提供演示用材料数据库与 Hubbard 晶格工具，可作为模拟基准的起点。
 - `qumater.qsim` 实现了 Pauli 哈密顿量辅助函数、可交换项分组（带缓存矩阵加速）以及基于 Fubini–Study 度量的低深度 VQE 求解器。
+- `qumater.qsim.modules` 提供量子算法模块注册表，可发现通过 `entry_points` 发布的第三方算法。
 - 材料目录提供 `summary()` 辅助方法，可直接生成用于可视化或 API 的序列化视图。
 - `PauliHamiltonian` 现支持对密度矩阵求期望值，便于混合态或实验测量数据的分析。
 
@@ -24,7 +25,13 @@ pytest
 
 ```python
 from qumater.materials import QuantumMaterialDatabase
-from qumater.qsim import HardwareAgnosticAnsatz, LowDepthVQE, PauliHamiltonian, PauliTerm
+from qumater.qsim import (
+    HardwareAgnosticAnsatz,
+    LowDepthVQE,
+    PauliHamiltonian,
+    PauliTerm,
+    get_algorithm_registry,
+)
 
 db = QuantumMaterialDatabase.demo()
 print(db.summary())  # 结构化查看目录内容
@@ -39,4 +46,43 @@ print(result.energies[-1])
 import numpy as np
 rho = np.eye(2, dtype=complex) / 2
 print(h.expectation_density(rho))
+
+# 通过模块注册表按名称实例化算法
+registry = get_algorithm_registry()
+low_depth = registry.create(
+    "low_depth_vqe",
+    hamiltonian=h,
+    ansatz=ansatz,
+    learning_rate=0.1,
+)
+print(isinstance(low_depth, LowDepthVQE))
 ```
+
+## 扩展量子算法模块
+
+`qumater.qsim.modules` 允许使用者轻松包装并分发新的量子算法：
+
+```python
+from qumater.qsim.modules import AlgorithmModule, register_algorithm_module
+
+
+class CustomAlgorithm:
+    def __init__(self, parameter: float) -> None:
+        self.parameter = parameter
+
+    def run(self) -> float:
+        return self.parameter ** 2
+
+
+register_algorithm_module(
+    AlgorithmModule(
+        name="custom_algorithm",
+        summary="Squares the provided parameter.",
+        factory=lambda parameter: CustomAlgorithm(parameter),
+        keywords=("demo", "prototype"),
+    )
+)
+```
+
+第三方包可在 `pyproject.toml` 中声明 `qumater.qsim.algorithms` 入口点，
+QuMater 会在运行时自动发现并注册这些算法。
