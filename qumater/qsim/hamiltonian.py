@@ -121,5 +121,26 @@ class PauliHamiltonian:
             result += term.matrix() @ state
         return result
 
+    def variance(self, state: np.ndarray) -> float:
+        """Return the energy variance ``⟨H²⟩ - ⟨H⟩²`` for *state*.
+
+        The variance quantifies the quality of a variational eigenstate
+        candidate and mirrors the metrics used in industrial VQE benchmarks.  A
+        vanishing variance indicates that the supplied state is an eigenstate of
+        the Hamiltonian.
+        """
+
+        state = np.asarray(state, dtype=complex)
+        if state.ndim != 1 or state.size != 2**self._num_qubits:
+            raise ValueError("State has incompatible shape")
+
+        expectation_value = self.expectation(state)
+        ham_state = self.apply(state)
+        h2_expectation = np.real(np.vdot(ham_state, ham_state))
+        variance = h2_expectation - expectation_value**2
+        if variance < 0 and abs(variance) < 1e-12:
+            variance = 0.0
+        return float(variance)
+
 
 __all__ = ["PauliTerm", "PauliHamiltonian", "group_commuting_terms"]
