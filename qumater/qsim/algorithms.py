@@ -8,6 +8,7 @@ import numpy as np
 
 from .ansatz import HardwareAgnosticAnsatz
 from .hamiltonian import PauliHamiltonian
+from .modules import AlgorithmModule, register_algorithm_module
 
 
 @dataclass
@@ -127,4 +128,24 @@ class LowDepthVQE:
         return OptimizationHistory(history_params, history_energies, converged)
 
 
-__all__ = ["LowDepthVQE", "OptimizationHistory"]
+def _low_depth_vqe_factory(
+    hamiltonian: PauliHamiltonian,
+    ansatz: HardwareAgnosticAnsatz,
+    **kwargs: float,
+) -> LowDepthVQE:
+    return LowDepthVQE(hamiltonian=hamiltonian, ansatz=ansatz, **kwargs)
+
+
+register_algorithm_module(
+    AlgorithmModule(
+        name="low_depth_vqe",
+        summary="Variational eigensolver with approximate quantum natural gradient updates.",
+        factory=_low_depth_vqe_factory,
+        keywords=("vqe", "natural-gradient", "phasecraft"),
+        package=__name__,
+    ),
+    overwrite=True,
+)
+
+
+__all__ = ["LowDepthVQE", "OptimizationHistory", "_low_depth_vqe_factory"]
