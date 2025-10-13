@@ -202,3 +202,24 @@ class QuantumMaterialDatabase:
         """Return a snapshot of the catalogue content as a plain dictionary."""
 
         return dict(self._entries)
+
+    def summary(self) -> List[Dict[str, object]]:
+        """Return an ordered summary of the catalogue contents.
+
+        The helper is convenient when surfacing metadata in notebooks or REST
+        responses.  Each entry is converted into a serialisable dictionary with
+        a copy of the parameter mapping to avoid accidental mutation of the
+        internal state.
+        """
+
+        summary: List[Dict[str, object]] = []
+        for entry in sorted(self._entries.values(), key=lambda item: item.name.lower()):
+            summary.append(
+                {
+                    "name": entry.name,
+                    "tags": list(entry.tags),
+                    "citation": entry.citation,
+                    "parameters": dict(entry.parameters),
+                }
+            )
+        return summary

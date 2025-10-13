@@ -24,6 +24,24 @@ def test_expectation_matches_matrix():
     assert np.isclose(grouped, direct)
 
 
+def test_density_expectation_matches_state_projection():
+    state = np.array([1 / np.sqrt(2), 0.0, 0.0, 1 / np.sqrt(2)], dtype=complex)
+    density = np.outer(state, np.conjugate(state))
+    hamiltonian = PauliHamiltonian([PauliTerm(1.0, "ZI"), PauliTerm(2.0, "IZ")])
+    energy_state = hamiltonian.expectation(state)
+    energy_density = hamiltonian.expectation_density(density)
+    assert energy_state == pytest.approx(energy_density)
+
+
+def test_commuting_groups_cached():
+    terms = [PauliTerm(1.0, "XX"), PauliTerm(0.5, "YY"), PauliTerm(-0.75, "ZZ")]
+    hamiltonian = PauliHamiltonian(terms)
+    cached_groups = hamiltonian.commuting_groups
+    # All terms mutually commute, therefore a single cached group should exist.
+    assert len(cached_groups) == 1
+    assert set(cached_groups[0]) == set(terms)
+
+
 def test_variance_identifies_eigenstates_and_superpositions():
     hamiltonian = PauliHamiltonian([PauliTerm(1.0, "Z")])
 

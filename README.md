@@ -9,7 +9,9 @@ QuMater 聚合了轻量却表达力十足的构件，用于搭建硬件无关的
 ## 功能特性
 
 - `qumater.materials` 提供演示用材料数据库与 Hubbard 晶格工具，可作为模拟基准的起点。
-- `qumater.qsim` 实现了 Pauli 哈密顿量辅助函数、可交换项分组以及基于 Fubini–Study 度量的低深度 VQE 求解器。
+- `qumater.qsim` 实现了 Pauli 哈密顿量辅助函数、可交换项分组（带缓存矩阵加速）以及基于 Fubini–Study 度量的低深度 VQE 求解器。
+- 材料目录提供 `summary()` 辅助方法，可直接生成用于可视化或 API 的序列化视图。
+- `PauliHamiltonian` 现支持对密度矩阵求期望值，便于混合态或实验测量数据的分析。
 
 ## 快速开始
 
@@ -25,10 +27,16 @@ from qumater.materials import QuantumMaterialDatabase
 from qumater.qsim import HardwareAgnosticAnsatz, LowDepthVQE, PauliHamiltonian, PauliTerm
 
 db = QuantumMaterialDatabase.demo()
+print(db.summary())  # 结构化查看目录内容
 lih = db.get("LiH minimal basis")
 ansatz = HardwareAgnosticAnsatz(num_qubits=1, layers=1)
 h = PauliHamiltonian([PauliTerm(1.0, "Z")])
 optimiser = LowDepthVQE(h, ansatz)
 result = optimiser.run()
 print(result.energies[-1])
+
+# 利用实验或模拟获得的密度矩阵来评估能量
+import numpy as np
+rho = np.eye(2, dtype=complex) / 2
+print(h.expectation_density(rho))
 ```
