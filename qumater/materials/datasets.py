@@ -10,7 +10,7 @@ requiring an external service.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Mapping, Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -110,6 +110,57 @@ class QuantumMaterialDatabase:
             if required.issubset({tag.lower() for tag in entry.tags}):
                 result.append(entry)
         return result
+
+    def filter(
+        self,
+        *,
+        tags: Optional[Iterable[str]] = None,
+        parameter_bounds: Optional[Mapping[str, Tuple[Optional[float], Optional[float]]]] = None,
+    ) -> List[MaterialEntry]:
+        """Return entries matching semantic tags and numeric parameter ranges.
+
+        Parameters
+        ----------
+        tags:
+            Optional iterable of tags that must all be present in the entry.  Tag
+            comparisons are case-insensitive.
+        parameter_bounds:
+            Optional mapping from parameter names to inclusive ``(lower, upper)``
+            bounds.  ``None`` may be used to leave a bound open ended.  Entries
+            missing a requested parameter are excluded from the results.
+
+        Notes
+        -----
+        Phasecraft's industrial partners highlighted in the Tencent report rely
+        on curated subsets of large data feeds.  The :meth:`filter` helper makes
+        it easy to carve out the most relevant subset directly inside research
+        scripts without maintaining an external query engine.
+        """
+
+        if tags is not None:
+            required_tags = {tag.lower() for tag in tags}
+        else:
+            required_tags = None
+
+        bounds = dict(parameter_bounds or {})
+
+        def matches(entry: MaterialEntry) -> bool:
+            if required_tags is not None:
+                entry_tags = {tag.lower() for tag in entry.tags}
+                if not required_tags.issubset(entry_tags):
+                    return False
+
+            for name, (lower, upper) in bounds.items():
+                if name not in entry.parameters:
+                    return False
+                value = entry.parameters[name]
+                if lower is not None and value < lower:
+                    return False
+                if upper is not None and value > upper:
+                    return False
+            return True
+
+        return [entry for entry in self._entries.values() if matches(entry)]
 
     @classmethod
     def demo(cls) -> "QuantumMaterialDatabase":

@@ -23,3 +23,13 @@ def test_hubbard_square_lattice_adjacency():
     assert np.array_equal(lattice.adjacency, expected)
     assert lattice.hopping == 1.0
     assert lattice.onsite_interaction == 4.0
+
+
+def test_database_filter_allows_semantic_and_numeric_constraints():
+    db = QuantumMaterialDatabase.demo()
+    superconductors = db.filter(tags=["superconductor"], parameter_bounds={"Tc": (60.0, None)})
+    assert [entry.name for entry in superconductors] == ["FeSe monolayer"]
+
+    # Open ended bounds should act as inclusive filters and exclude missing parameters.
+    strongly_correlated = db.filter(parameter_bounds={"u": (4.0, 4.0)})
+    assert [entry.name for entry in strongly_correlated] == ["Fermi-Hubbard 2x2"]
