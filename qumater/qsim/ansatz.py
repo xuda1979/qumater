@@ -184,7 +184,7 @@ class HardwareAgnosticAnsatz:
                     if idx == op_index:
                         gate = _rotation_z_derivative(value)
                     state = _apply_single_qubit_gate(state, gate, qubit, self.num_qubits)
-                else:  # "cz"
+                else:  # "cz" 门
                     state = _apply_cz(state, qubit, int(value), self.num_qubits)
             grads[grad_index] = state
 

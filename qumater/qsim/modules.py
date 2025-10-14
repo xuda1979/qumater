@@ -90,16 +90,16 @@ class AlgorithmRegistry:
 
         return sorted(self._modules.values(), key=lambda module: module.name)
 
-    def __contains__(self, name: object) -> bool:  # pragma: no cover - trivial
+    def __contains__(self, name: object) -> bool:  # pragma: no cover - 简单逻辑
         if not isinstance(name, str):
             return False
         return self._key(name) in self._modules
 
-    def __iter__(self) -> Iterator[AlgorithmModule]:  # pragma: no cover - trivial
+    def __iter__(self) -> Iterator[AlgorithmModule]:  # pragma: no cover - 简单逻辑
         yield from self.available()
 
     # ------------------------------------------------------------------
-    # Decorator helpers
+    # 装饰器辅助工具
     # ------------------------------------------------------------------
     def algorithm(self, *, name: str, summary: str, keywords: Iterable[str] = ()) -> Callable[[AlgorithmFactory], AlgorithmFactory]:
         """Decorator to register *factory* functions as modules."""
@@ -156,7 +156,7 @@ def load_entry_point_modules(
     entry_points = entry_points_fn()
     if hasattr(entry_points, "select"):
         selected = entry_points.select(group=group)
-    else:  # pragma: no cover - for Python < 3.10 compatibility
+    else:  # pragma: no cover - 兼容 Python 3.10 之前的版本
         selected = entry_points.get(group, [])
 
     for entry_point in selected:

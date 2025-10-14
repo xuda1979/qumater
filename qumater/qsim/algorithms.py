@@ -110,8 +110,7 @@ class LowDepthVQE:
 
     def run(self, initial_parameters: Optional[Sequence[float]] = None) -> OptimizationHistory:
         if initial_parameters is None:
-            # Deterministically break the all-zero symmetry so that exact
-            # gradients do not stall the optimisation at saddle points.
+            # 为避免完全零向量导致解析梯度停滞，使用确定性扰动打破对称性
             parameters = np.arange(1, self.ansatz.parameter_count + 1, dtype=float) * 1e-2
             parameters[1::2] *= -1.0
         else:
@@ -146,8 +145,7 @@ class LowDepthVQE:
                 break
 
         if not converged:
-            # record final state if loop exited without break
-            # 当循环没有提前收敛时，补记录最终的参数与能量
+            # 若循环未提前收敛，则补充记录最终的参数与能量
             state = self.ansatz.prepare_state(parameters)
             energy = self.hamiltonian.expectation(state)
             history_params.append(parameters.copy())

@@ -37,7 +37,7 @@ def test_commuting_groups_cached():
     terms = [PauliTerm(1.0, "XX"), PauliTerm(0.5, "YY"), PauliTerm(-0.75, "ZZ")]
     hamiltonian = PauliHamiltonian(terms)
     cached_groups = hamiltonian.commuting_groups
-    # All terms mutually commute, therefore a single cached group should exist.
+    # 由于各项彼此对易，因此应只缓存一个分组。
     assert len(cached_groups) == 1
     assert set(cached_groups[0]) == set(terms)
 
