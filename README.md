@@ -1,8 +1,8 @@
-# QuMater 项目说明
 
-QuMater 汇集了一套精炼而富有表现力的量子材料数据集、变分线路以及量子算法参考实现，灵感源自腾讯 2025 年对 Phasecraft“硬件无关”量子材料平台的报道。项目展示了如何将研究流程封装为可复用、具备工程化友好度与完整测试体系的 Python 软件包。
+# QuMater —— 面向硬件无关量子模拟的工具包
 
-> 英文概述请参考早期提交；本版本 README 全面翻译为中文，涵盖相同的信息结构。
+QuMater 提供了一套轻量但表达力充足的量子材料数据集、变分线路和参考量子算法实现，灵感来自腾讯新闻在 2025 年对 Phasecraft 的报道。项目展示了如何将“硬件无关”的研究流程封装成具有生产级易用性的 Python 包，并配套测试体系。
+
 
 ## 目录
 
@@ -37,6 +37,7 @@ QuMater 汇集了一套精炼而富有表现力的量子材料数据集、变分
 - **可扩展注册表**：`AlgorithmModule` 与 `AlgorithmRegistry` 组成的注册体系会自动加载在 `qumater.qsim.algorithms` 入口点下声明的额外模块。
 
 ## 仓库结构
+
 
 ```
 qumater/
@@ -137,9 +138,9 @@ class CustomAlgorithm:
 register_algorithm_module(
     AlgorithmModule(
         name="custom_algorithm",
-        summary="Squares the provided parameter.",
+        summary="返回参数的平方值。",
         factory=lambda parameter: CustomAlgorithm(parameter),
-        keywords=("demo", "prototype"),
+        keywords=("演示", "原型"),
     ),
     overwrite=True,
 )
