@@ -143,6 +143,11 @@ class QuantumMaterialDatabase:
             required_tags = None
 
         bounds = dict(parameter_bounds or {})
+        for name, (lower, upper) in bounds.items():
+            if lower is not None and upper is not None and lower > upper:
+                raise ValueError(
+                    f"Lower parameter bound must not exceed the upper bound for '{name}'"
+                )
 
         def matches(entry: MaterialEntry) -> bool:
             if required_tags is not None:

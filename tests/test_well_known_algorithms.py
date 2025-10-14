@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from qumater.qsim import (
     GroverSearch,
@@ -45,3 +46,19 @@ def test_quantum_phase_estimation_returns_expected_phase():
     assert isinstance(qpe, QuantumPhaseEstimation)
     assert result.binary == "010"
     assert abs(result.phase - phase) < 1 / (2**3)
+
+
+def test_quantum_phase_estimation_rejects_non_unitary_operator():
+    registry = get_algorithm_registry()
+    module = registry.get("quantum_phase_estimation")
+
+    non_unitary = np.array([[1.0, 0.0], [0.0, 0.5]], dtype=complex)
+    eigenstate = np.array([1.0, 0.0], dtype=complex)
+
+    with pytest.raises(ValueError):
+        module.create(unitary=non_unitary, eigenstate=eigenstate, precision_qubits=2)
+
+
+def test_grover_search_requires_marked_states():
+    with pytest.raises(ValueError):
+        GroverSearch(num_qubits=2, oracle=[])
