@@ -20,6 +20,28 @@ def _rotation_z(theta: float) -> np.ndarray:
     )
 
 
+def _rotation_y_derivative(theta: float) -> np.ndarray:
+    half = theta / 2.0
+    return np.array(
+        [
+            [-0.5 * np.sin(half), -0.5 * np.cos(half)],
+            [0.5 * np.cos(half), -0.5 * np.sin(half)],
+        ],
+        dtype=complex,
+    )
+
+
+def _rotation_z_derivative(theta: float) -> np.ndarray:
+    half = theta / 2.0
+    return np.array(
+        [
+            [(-0.5j) * np.exp(-1j * half), 0.0],
+            [0.0, (0.5j) * np.exp(1j * half)],
+        ],
+        dtype=complex,
+    )
+
+
 def _apply_single_qubit_gate(state: np.ndarray, gate: np.ndarray, qubit: int, num_qubits: int) -> np.ndarray:
     state_t = state.reshape([2] * num_qubits)
     state_t = np.moveaxis(state_t, qubit, 0)
@@ -108,21 +130,64 @@ class HardwareAgnosticAnsatz:
         return state / norm
 
     def parameter_gradient(self, parameters: Sequence[float]) -> np.ndarray:
-        """Finite-difference gradient of the prepared state's amplitudes.
+        """Return the analytic gradient of the prepared state's amplitudes.
 
-        Variational quantum compiling stacks frequently rely on efficient
-        gradient evaluation to keep optimisation stable on NISQ era hardware.
-        We expose gradients to support meta-optimisers and benchmarking.
+        We differentiate the circuit exactly by inserting the derivative of the
+        corresponding rotation matrix at the position of each parameterised
+        gate.  This mirrors the adjoint differentiation strategy used in modern
+        quantum simulators and avoids the numerical instabilities that
+        accompany finite-difference estimators.
         """
 
         parameters = np.asarray(parameters, dtype=float)
-        eps = 1e-6
-        base_state = self.prepare_state(parameters)
-        grads = np.zeros((self.parameter_count, base_state.size), dtype=complex)
-        for i in range(self.parameter_count):
-            shifted = parameters.copy()
-            shifted[i] += eps
-            grads[i] = (self.prepare_state(shifted) - base_state) / eps
+        if parameters.size != self.parameter_count:
+            raise ValueError(
+                f"Expected {self.parameter_count} parameters, received {parameters.size}"
+            )
+
+        dim = 2**self.num_qubits
+        grads = np.zeros((self.parameter_count, dim), dtype=complex)
+
+        operations: list[tuple[str, int, float | int]] = []
+        parameter_positions: list[int] = []
+        index = 0
+        for _ in range(self.layers):
+            for qubit in range(self.num_qubits):
+                theta = parameters[index]
+                operations.append(("ry", qubit, float(theta)))
+                parameter_positions.append(len(operations) - 1)
+                index += 1
+
+                phi = parameters[index]
+                operations.append(("rz", qubit, float(phi)))
+                parameter_positions.append(len(operations) - 1)
+                index += 1
+
+            for qubit in range(self.num_qubits):
+                target = (qubit + 1) % self.num_qubits
+                if target == qubit:
+                    continue
+                operations.append(("cz", qubit, target))
+
+        for grad_index, op_index in enumerate(parameter_positions):
+            state = np.zeros(dim, dtype=complex)
+            state[0] = 1.0
+            for idx, operation in enumerate(operations):
+                op_type, qubit, value = operation
+                if op_type == "ry":
+                    gate = _rotation_y(value)
+                    if idx == op_index:
+                        gate = _rotation_y_derivative(value)
+                    state = _apply_single_qubit_gate(state, gate, qubit, self.num_qubits)
+                elif op_type == "rz":
+                    gate = _rotation_z(value)
+                    if idx == op_index:
+                        gate = _rotation_z_derivative(value)
+                    state = _apply_single_qubit_gate(state, gate, qubit, self.num_qubits)
+                else:  # "cz"
+                    state = _apply_cz(state, qubit, int(value), self.num_qubits)
+            grads[grad_index] = state
+
         return grads
 
 
