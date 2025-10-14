@@ -105,8 +105,12 @@ class LowDepthVQE:
 
     def run(self, initial_parameters: Optional[Sequence[float]] = None) -> OptimizationHistory:
         if initial_parameters is None:
-            initial_parameters = np.zeros(self.ansatz.parameter_count)
-        parameters = np.asarray(initial_parameters, dtype=float)
+            # Deterministically break the all-zero symmetry so that exact
+            # gradients do not stall the optimisation at saddle points.
+            parameters = np.arange(1, self.ansatz.parameter_count + 1, dtype=float) * 1e-2
+            parameters[1::2] *= -1.0
+        else:
+            parameters = np.array(initial_parameters, dtype=float, copy=True)
         history_params: List[np.ndarray] = []
         history_energies: List[float] = []
         converged = False
