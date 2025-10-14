@@ -94,8 +94,8 @@ print(phase_result.binary)  # '010'
 print(phase_result.phase)
 ```
 
-以上示例在项目根目录运行，最新一次执行的详细输出可在
-[`reports/readme_examples_output.txt`](reports/readme_examples_output.txt) 中查阅，
+以上示例在项目根目录运行，最新一次执行的详细输出（包含输入、量化指标及概率分布等细节）可在
+[`reports/readme_examples_output.md`](reports/readme_examples_output.md) 中查阅，
 便于核对随文注释与真实结果是否一致。
 
 ## 扩展量子算法模块
