@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from qumater.materials import QuantumMaterialDatabase, hubbard_square_lattice
 
@@ -47,3 +48,18 @@ def test_summary_returns_serialisable_view():
     fe_se["parameters"]["Tc"] = 70.0
     # The original entry should remain unchanged because the summary returns copies.
     assert db.get("FeSe monolayer").parameters["Tc"] == 65.0
+
+
+def test_register_rejects_duplicate_names():
+    db = QuantumMaterialDatabase.demo()
+    first = db.get("LiH minimal basis")
+
+    with pytest.raises(ValueError):
+        db.register(first)
+
+
+def test_filter_rejects_invalid_parameter_bounds():
+    db = QuantumMaterialDatabase.demo()
+
+    with pytest.raises(ValueError):
+        db.filter(parameter_bounds={"Tc": (70.0, 60.0)})

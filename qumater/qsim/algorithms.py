@@ -337,7 +337,23 @@ register_algorithm_module(
 
 
 class QuantumPhaseEstimation:
-    """Estimate the eigenphase of a unitary given one of its eigenstates."""
+    """Estimate the eigenphase of a unitary given one of its eigenstates.
+
+    Parameters
+    ----------
+    unitary:
+        Square matrix representing the unitary whose eigenphase is estimated.
+    eigenstate:
+        An eigenvector of ``unitary`` corresponding to the eigenphase of
+        interest.
+    precision_qubits:
+        Number of readout qubits used to discretise the phase estimate.
+    unitarity_tol:
+        Absolute tolerance used when verifying that ``unitary`` is indeed
+        unitary.  Providing a dedicated tolerance mirrors the behaviour of
+        production simulators that validate user provided operators before
+        executing costly workflows.
+    """
 
     def __init__(
         self,
@@ -345,6 +361,7 @@ class QuantumPhaseEstimation:
         unitary: np.ndarray,
         eigenstate: Sequence[complex],
         precision_qubits: int,
+        unitarity_tol: float = 1e-8,
     ) -> None:
         if precision_qubits < 1:
             raise ValueError("precision_qubits must be positive")
@@ -363,10 +380,19 @@ class QuantumPhaseEstimation:
         if norm == 0:
             raise ValueError("eigenstate must be non-zero")
 
+        if not np.allclose(
+            unitary.conjugate().T @ unitary,
+            np.eye(unitary.shape[0], dtype=complex),
+            atol=unitarity_tol,
+            rtol=0.0,
+        ):
+            raise ValueError("unitary must be unitary within the provided tolerance")
+
         self.unitary = unitary
         self.eigenstate = eigenstate / norm
         self.precision_qubits = int(precision_qubits)
         self.dimension = unitary.shape[0]
+        self.unitarity_tol = float(unitarity_tol)
 
     def run(self) -> PhaseEstimationResult:
         """Return a phase estimate rounded to ``precision_qubits`` bits."""
@@ -387,10 +413,13 @@ class QuantumPhaseEstimation:
 
 
 def _qpe_factory(
-    *, unitary: np.ndarray, eigenstate: Sequence[complex], precision_qubits: int
+    *, unitary: np.ndarray, eigenstate: Sequence[complex], precision_qubits: int, unitarity_tol: float = 1e-8
 ) -> QuantumPhaseEstimation:
     return QuantumPhaseEstimation(
-        unitary=unitary, eigenstate=eigenstate, precision_qubits=precision_qubits
+        unitary=unitary,
+        eigenstate=eigenstate,
+        precision_qubits=precision_qubits,
+        unitarity_tol=unitarity_tol,
     )
 
 
