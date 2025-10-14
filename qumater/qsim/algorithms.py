@@ -87,19 +87,24 @@ class LowDepthVQE:
         self.regularisation = float(regularisation)
 
     def _energy_gradient(self, parameters: np.ndarray, state: np.ndarray) -> np.ndarray:
+        # 计算 |ψ(θ)⟩ 在哈密顿量作用下的状态，用于后续的梯度评估
         ham_state = self.hamiltonian.apply(state)
+        # ansatz.parameter_gradient 返回对每个可调参数的导数向量
         gradients = self.ansatz.parameter_gradient(parameters)
         grad = np.zeros(parameters.shape, dtype=float)
         for idx in range(gradients.shape[0]):
             derivative = gradients[idx]
+            # 近似量子自然梯度基于能量对参数的导数
             grad[idx] = 2.0 * np.real(np.vdot(derivative, ham_state))
         return grad
 
     def _metric_tensor(self, parameters: np.ndarray, state: np.ndarray) -> np.ndarray:
+        # Fubini–Study 度量张量由梯度的 Gram 矩阵减去投影项组成
         gradients = self.ansatz.parameter_gradient(parameters)
         overlaps = gradients @ np.conjugate(state)
         gram = gradients @ np.conjugate(gradients.T)
         metric = np.real(gram - np.outer(overlaps, np.conjugate(overlaps)))
+        # 添加轻量正则项避免张量奇异
         metric += self.regularisation * np.eye(metric.shape[0])
         return metric
 
@@ -117,11 +122,13 @@ class LowDepthVQE:
         last_direction_norm = None
 
         for _ in range(self.max_iterations):
+            # 准备当前参数下的量子态并评估期望能量
             state = self.ansatz.prepare_state(parameters)
             energy = self.hamiltonian.expectation(state)
             history_params.append(parameters.copy())
             history_energies.append(float(energy))
 
+            # 量子自然梯度方向需要梯度向量与度量张量
             gradient = self._energy_gradient(parameters, state)
             metric = self._metric_tensor(parameters, state)
             try:
@@ -131,6 +138,7 @@ class LowDepthVQE:
 
             update_norm = np.linalg.norm(direction)
             last_direction_norm = update_norm
+            # 使用固定学习率执行梯度下降步
             parameters = parameters - self.learning_rate * direction
 
             if update_norm * self.learning_rate < self.tolerance:
@@ -139,6 +147,7 @@ class LowDepthVQE:
 
         if not converged:
             # record final state if loop exited without break
+            # 当循环没有提前收敛时，补记录最终的参数与能量
             state = self.ansatz.prepare_state(parameters)
             energy = self.hamiltonian.expectation(state)
             history_params.append(parameters.copy())
@@ -251,6 +260,7 @@ class GroverSearch:
 
         oracle_matrix = np.diag(self._oracle_phase.astype(complex))
         for _ in range(self.iterations):
+            # 交替施加 Oracle 相位翻转与扩散算符，实现振幅放大
             state = oracle_matrix @ state
             state = diffusion @ state
 
@@ -293,6 +303,7 @@ class QuantumFourierTransform:
             raise ValueError(
                 f"Expected a state with {self.dimension} amplitudes, received {amplitudes.size}"
             )
+        # 经典 FFT 提供与量子傅里叶变换等价的变换矩阵
         transformed = np.fft.fft(amplitudes) / np.sqrt(self.dimension)
         return transformed
 
@@ -304,6 +315,7 @@ class QuantumFourierTransform:
             raise ValueError(
                 f"Expected a state with {self.dimension} amplitudes, received {amplitudes.size}"
             )
+        # 逆 QFT 对应归一化的 IFFT
         transformed = np.fft.ifft(amplitudes) * np.sqrt(self.dimension)
         return transformed
 
@@ -364,10 +376,12 @@ class QuantumPhaseEstimation:
         if np.isclose(np.linalg.norm(evolved), 0.0):
             raise RuntimeError("Unitary produced a zero vector")
 
+        # 获取酉作用前后态矢量的相位差，并根据精度量化到离散格点
         phase_fraction = (np.angle(overlap) / (2 * np.pi)) % 1.0
         scaling = 2**self.precision_qubits
         discrete = int(np.floor(phase_fraction * scaling + 0.5)) % scaling
         estimate = discrete / scaling
+        # 同时返回便于展示的二进制字符串表示
         binary = format(discrete, f"0{self.precision_qubits}b")
         return PhaseEstimationResult(phase=estimate, binary=binary)
 

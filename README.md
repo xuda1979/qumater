@@ -16,6 +16,22 @@ pip install -e .
 pytest
 ```
 
+## 运行测试
+
+项目使用 [pytest](https://docs.pytest.org/) 作为测试运行器。完成依赖安装后，可在仓库根目录执行：
+
+```bash
+pytest tests
+```
+
+若希望查看更详细的输出或仅运行特定用例，可以结合常用选项，例如：
+
+```bash
+pytest tests -vv -k "grover"
+```
+
+上述命令分别表示：`-vv` 打印更详细的断言信息，`-k "grover"` 仅匹配包含关键字 "grover" 的测试函数。所有测试用例完成后会给出统计摘要与失败详情，便于定位问题。
+
 ## 使用示例
 
 ```python
