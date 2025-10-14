@@ -1,19 +1,13 @@
-# QuMater：硬件无关的量子模拟
+# QuMater：硬件无关的量子模拟工具包
 
-QuMater 聚合了轻量却表达力十足的构件，用于搭建硬件无关的量子模拟工作流，并帮助研究者快速构建量子算法模块。设计灵感来自 [腾讯 2025 年报道](https://news.qq.com/rain/a/20250903A07NHG00)中介绍的 Phasecraft 前沿算法，软件内置包括 Grover 搜索、QFT 与 QPE 在内的经典量子算法实现，可直接复用，同时也提供面向多个科学领域（不仅限于材料科学）的模型化能力。框架重点聚焦于：
+QuMater 聚合了轻量却表达力十足的组件，帮助研究者搭建硬件无关的量子模拟原型。项目灵感来自腾讯 2025 年报道中提到的 Phasecraft 工作：仓库实现了示例性的材料元数据目录、低深度变分线路以及多个经典量子算法的参考版本，便于直接复用或作为进一步研究的基准。
 
-- 具备丰富元数据的材料目录，贴近工业级数据集；
-- 低深度、硬件高效且稀疏纠缠的变分参数化；
-- 结合测量分组启发式的量子自然梯度优化。
+## 核心能力概览
 
-## 功能特性
-
-- `qumater.materials` 提供演示用材料数据库与 Hubbard 晶格工具，可作为模拟基准的起点。
-- `qumater.qsim` 实现了 Pauli 哈密顿量辅助函数、可交换项分组（带缓存矩阵加速）以及基于 Fubini–Study 度量的低深度 VQE 求解器。
-- `qumater.qsim.modules` 提供量子算法模块注册表，可发现通过 `entry_points` 发布的第三方算法。
-- `qumater.qsim.algorithms` 现内置 Grover 搜索、量子傅里叶变换 (QFT) 与量子相位估计 (QPE) 等经典算法实现，可直接通过模块注册表获取并运行。
-- 材料目录提供 `summary()` 辅助方法，可直接生成用于可视化或 API 的序列化视图。
-- `PauliHamiltonian` 现支持对密度矩阵求期望值，便于混合态或实验测量数据的分析。
+- **材料与模型元数据** —— `qumater.materials` 提供内建演示用目录（`QuantumMaterialDatabase.demo()`）以及基础的 Hubbard 晶格工具。所有条目都带有标签、引用信息和参数字典，方便按照语义或参数范围过滤，同时支持 `summary()` 方法导出结构化视图。
+- **低深度、稀疏纠缠的变分参数化** —— `HardwareAgnosticAnsatz` 通过交替的单比特旋转与环形 CZ 纠缠门生成状态，强调硬件友好的线路深度，并暴露梯度计算接口以供上层优化器使用。
+- **带测量分组的量子自然梯度 VQE** —— `LowDepthVQE` 利用 `PauliHamiltonian` 对可交换项进行启发式分组并缓存矩阵，结合基于 Fubini–Study 度量的近似量子自然梯度更新策略。
+- **量子算法模块注册表** —— `qumater.qsim.modules` 提供轻量级注册表，内置 Grover 搜索、量子傅里叶变换 (QFT) 与量子相位估计 (QPE) 的参考实现，并支持通过 `entry_points` 发现第三方算法。
 
 ## 快速开始
 
@@ -22,7 +16,7 @@ pip install -e .
 pytest
 ```
 
-## 示例
+## 使用示例
 
 ```python
 from qumater.materials import QuantumMaterialDatabase
@@ -34,21 +28,24 @@ from qumater.qsim import (
     get_algorithm_registry,
 )
 
+# 载入演示材料目录并查看结构化摘要
 db = QuantumMaterialDatabase.demo()
-print(db.summary())  # 结构化查看目录内容
+print(db.summary())
 lih = db.get("LiH minimal basis")
+
+# 构建低深度硬件无关 ansatz 和简单哈密顿量
 ansatz = HardwareAgnosticAnsatz(num_qubits=1, layers=1)
 h = PauliHamiltonian([PauliTerm(1.0, "Z")])
 optimiser = LowDepthVQE(h, ansatz)
 result = optimiser.run()
 print(result.energies[-1])
 
-# 利用实验或模拟获得的密度矩阵来评估能量
+# 利用密度矩阵数据计算期望值
 import numpy as np
 rho = np.eye(2, dtype=complex) / 2
 print(h.expectation_density(rho))
 
-# 通过模块注册表按名称实例化算法
+# 通过算法注册表按名称实例化内建算法
 registry = get_algorithm_registry()
 low_depth = registry.create(
     "low_depth_vqe",
@@ -85,5 +82,4 @@ register_algorithm_module(
 )
 ```
 
-第三方包可在 `pyproject.toml` 中声明 `qumater.qsim.algorithms` 入口点，
-QuMater 会在运行时自动发现并注册这些算法。
+第三方包可在 `pyproject.toml` 中声明 `qumater.qsim.algorithms` 入口点，QuMater 会在运行时自动发现并注册这些算法。
