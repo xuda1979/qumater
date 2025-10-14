@@ -56,6 +56,44 @@ low_depth = registry.create(
 print(isinstance(low_depth, LowDepthVQE))
 ```
 
+### 调用内建的经典量子算法
+
+通过算法注册表，可以直接实例化仓库已包含的 Grover 搜索、量子傅里叶变换 (QFT) 与量子相位估计 (QPE) 参考实现：
+
+```python
+import numpy as np
+
+from qumater.qsim import get_algorithm_registry
+
+registry = get_algorithm_registry()
+
+# Grover 搜索：提供被标记的基态索引，返回概率分布及最可能的结果
+grover = registry.create("grover_search", num_qubits=3, oracle=[5])
+grover_result = grover.run()
+print(grover_result.most_likely_state())  # 5
+print(grover_result.probabilities)
+
+# 量子傅里叶变换：对态矢量执行 QFT 及其逆操作
+qft = registry.create("quantum_fourier_transform", num_qubits=2)
+state = np.array([1.0, 0.0, 0.0, 0.0], dtype=complex)
+transformed = qft.run(state)
+print(transformed)            # 接近均匀分布的幅度
+print(qft.inverse(transformed))  # 还原原始态
+
+# 量子相位估计：给出作用于本征态的酉矩阵与期望精度，返回估计的相位二进制与浮点表示
+unitary = np.diag([1.0, np.exp(2j * np.pi * 0.25)])
+eigenstate = np.array([0.0, 1.0], dtype=complex)
+qpe = registry.create(
+    "quantum_phase_estimation",
+    unitary=unitary,
+    eigenstate=eigenstate,
+    precision_qubits=3,
+)
+phase_result = qpe.run()
+print(phase_result.binary)  # '010'
+print(phase_result.phase)
+```
+
 ## 扩展量子算法模块
 
 `qumater.qsim.modules` 允许使用者轻松包装并分发新的量子算法：
