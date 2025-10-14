@@ -1,96 +1,71 @@
-# QuMater – Hardware-Agnostic Quantum Simulation Toolkit
+# QuMater 项目说明
 
-QuMater packages a lightweight yet expressive collection of quantum-material
-datasets, variational ansätze, and reference quantum algorithms inspired by the
-industrial initiatives highlighted in Tencent's 2025 coverage of Phasecraft.
-The project demonstrates how a *hardware-agnostic* research workflow can be
-captured in a reusable Python package with production-grade ergonomics and
-testing.
+QuMater 汇集了一套精炼而富有表现力的量子材料数据集、变分线路以及量子算法参考实现，灵感源自腾讯 2025 年对 Phasecraft“硬件无关”量子材料平台的报道。项目展示了如何将研究流程封装为可复用、具备工程化友好度与完整测试体系的 Python 软件包。
 
-> 中文摘要：QuMater 旨在复刻 Phasecraft 在腾讯新闻报道中提到的“硬件无关”量子模
-> 拟平台原型，提供可复用的数据目录、变分线路与常见量子算法实现，帮助研究者快速搭建
-> 工程化原型并开展后续实验。
+> 英文概述请参考早期提交；本版本 README 全面翻译为中文，涵盖相同的信息结构。
 
-## Table of Contents
+## 目录
 
-1. [Project Overview](#project-overview)
-2. [Key Capabilities](#key-capabilities)
-3. [Repository Layout](#repository-layout)
-4. [Installation](#installation)
-5. [Quick Start](#quick-start)
-6. [Built-in Algorithm Modules](#built-in-algorithm-modules)
-7. [Extending the Registry](#extending-the-registry)
-8. [Testing & Quality Assurance](#testing--quality-assurance)
-9. [Reproducing the README Examples](#reproducing-the-readme-examples)
-10. [Support & Contribution](#support--contribution)
-11. [License](#license)
+1. [项目概览](#项目概览)
+2. [核心能力](#核心能力)
+3. [仓库结构](#仓库结构)
+4. [安装步骤](#安装步骤)
+5. [快速上手](#快速上手)
+6. [内置算法模块](#内置算法模块)
+7. [扩展注册表](#扩展注册表)
+8. [测试与质量保障](#测试与质量保障)
+9. [复现实验输出](#复现实验输出)
+10. [支持与贡献](#支持与贡献)
+11. [许可证](#许可证)
 
-## Project Overview
+## 项目概览
 
-The toolkit intentionally mirrors the workflow described in the Tencent article:
+本工具包刻意贴近腾讯报道中的工作流：
 
-- **Curated materials metadata** for benchmarking near-term quantum hardware.
-- **Hardware-agnostic ansätze** that maintain shallow circuit depth while still
-  capturing relevant correlations.
-- **A modular algorithm registry** that exposes both QuMater's reference
-  implementations and third-party extensions discovered through
-  `importlib.metadata` entry points.
+- **精选材料元数据**：便于评估近期量子硬件性能。
+- **硬件无关变分线路**：保持浅层电路深度，同时捕捉关键关联效应。
+- **模块化算法注册表**：既暴露 QuMater 内置实现，也可通过 `importlib.metadata` 的入口点机制发现第三方扩展。
 
-The package is deliberately dependency-light (only NumPy) so that researchers
-can embed it directly into notebooks, service prototypes, or academic
-repositories.
+整个包仅依赖 NumPy，方便研究者直接在笔记本、服务原型或学术仓库中嵌入使用。
 
-## Key Capabilities
+## 核心能力
 
-- **Materials & model catalogue** – `qumater.materials` provides a
-  demonstration database (`QuantumMaterialDatabase.demo()`) with metadata-rich
-  entries and utilities such as tag-based filtering and numeric range queries.
-- **Hardware-friendly ansatz** – `HardwareAgnosticAnsatz` implements an
-  alternating layered structure (parameterised single-qubit rotations + ring CZ
-  entanglers) with analytic gradients for natural-gradient optimisation.
-- **Low-depth VQE** – `LowDepthVQE` combines measurement-grouped Pauli
-  Hamiltonians with an approximate quantum natural gradient update rule.
-- **Canonical algorithms** – Grover search, Quantum Fourier Transform, and
-  Quantum Phase Estimation are available as easily-instantiable modules.
-- **Extensible registry** – `AlgorithmModule`/`AlgorithmRegistry` form a
-  registry that automatically loads additional modules defined via
-  `qumater.qsim.algorithms` entry points.
+- **材料与模型目录**：`qumater.materials` 提供示例数据库（`QuantumMaterialDatabase.demo()`），包含丰富的元数据以及按标签过滤、数值区间筛选等工具。
+- **硬件友好型 Ansatz**：`HardwareAgnosticAnsatz` 实现交替层结构（参数化单比特旋转 + 环形 CZ 纠缠），并给出解析梯度以支持自然梯度优化。
+- **低深度 VQE**：`LowDepthVQE` 将分组测量的 Pauli 哈密顿量与近似量子自然梯度更新结合。
+- **经典算法参考实现**：内置 Grover 搜索、量子傅里叶变换（QFT）与量子相位估计（QPE），均可直接实例化。
+- **可扩展注册表**：`AlgorithmModule` 与 `AlgorithmRegistry` 组成的注册体系会自动加载在 `qumater.qsim.algorithms` 入口点下声明的额外模块。
 
-## Repository Layout
+## 仓库结构
 
 ```
 qumater/
-├── materials/           # Material metadata catalogue & lattice helpers
-├── qsim/                # Ansatz, Hamiltonian, algorithms, and registry tools
-reports/readme_examples_output.md  # Captured outputs for documentation snippets
-tests/                   # Comprehensive pytest suite
+├── materials/           # 材料元数据目录与晶格工具
+├── qsim/                # 变分线路、哈密顿量、算法与注册工具
+reports/readme_examples_output.md  # 文档示例的控制台输出
+tests/                   # 覆盖全面的 pytest 测试套件
 ```
 
-Each module exposes an explicit `__all__` to simplify consumption from other
-projects.  The tests exercise functional behaviour as well as critical error
-paths (e.g. invalid parameter bounds, malformed unitaries).
+各模块均显式导出 `__all__`，便于其他项目引用。测试不仅覆盖功能行为，也验证关键错误分支（如非法参数区间、非酉矩阵等）。
 
-## Installation
+## 安装步骤
 
-QuMater targets Python 3.10+.
+QuMater 目标运行环境为 Python 3.10 及以上版本。
 
 ```bash
 git clone https://github.com/<your-org>/qumater.git
 cd qumater
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows 请执行 .venv\\Scripts\\activate
 pip install --upgrade pip
 pip install -e .
 ```
 
-The editable install keeps the package in sync with local code edits—ideal for
-research workflows and downstream experimentation.
+以可编辑模式安装，便于在研究或二次开发时实时同步源码改动。
 
-## Quick Start
+## 快速上手
 
-The following notebook-style snippet demonstrates the complete workflow: loading
-materials, constructing a hardware-agnostic ansatz, optimising with VQE, and
-using the algorithm registry.
+以下类笔记本片段演示完整流程：载入材料、构造硬件无关 ansatz、使用 VQE 优化，并调用算法注册表。
 
 ```python
 import numpy as np
@@ -115,11 +90,11 @@ optimiser = LowDepthVQE(hamiltonian, ansatz, learning_rate=0.1)
 history = optimiser.run()
 print("Final energy:", history.energies[-1])
 
-# Density matrix expectation value helper
+# 利用密度矩阵求期望值的辅助函数
 rho = np.eye(2, dtype=complex) / 2
 print("Expectation via density matrix:", hamiltonian.expectation_density(rho))
 
-# Instantiate algorithms via the registry
+# 通过注册表实例化算法
 registry = get_algorithm_registry()
 low_depth = registry.create(
     "low_depth_vqe", hamiltonian=hamiltonian, ansatz=ansatz, learning_rate=0.05
@@ -127,13 +102,11 @@ low_depth = registry.create(
 print(isinstance(low_depth, LowDepthVQE))
 ```
 
-For convenience the resulting console output is captured in
-[`reports/readme_examples_output.md`](reports/readme_examples_output.md).
+相关控制台输出已整理至 [`reports/readme_examples_output.md`](reports/readme_examples_output.md)。
 
-## Built-in Algorithm Modules
+## 内置算法模块
 
-QuMater exposes a discoverable registry of algorithms.  The helper below lists
-all available modules along with their short descriptions:
+QuMater 暴露可发现的算法注册表。下面的助手代码会列出所有可用模块及其简介：
 
 ```python
 from qumater.qsim import get_algorithm_registry
@@ -143,16 +116,11 @@ for module in registry.available():
     print(f"{module.name:>25} :: {module.summary}")
 ```
 
-Grover search, QFT, and QPE can be instantiated directly through the registry
-or via the concrete classes imported from `qumater.qsim`.  Each implementation
-includes validation logic (e.g. QPE rejects non-unitary matrices and Grover
-requires at least one marked state) to emulate production robustness.
+内置的 Grover 搜索、QFT 与 QPE 既可通过注册表创建，也能直接从 `qumater.qsim` 导入具体类。每个实现都包含必要的校验逻辑（例如 QPE 会拒绝非酉矩阵，Grover 至少需要一个标记态），以贴近生产环境的健壮性。
 
-## Extending the Registry
+## 扩展注册表
 
-Third-party packages can expose new algorithms by registering them with the
-global registry or by exporting an entry point in `pyproject.toml` under the
-`qumater.qsim.algorithms` group.  Manual registration is equally simple:
+第三方包可以手动向全局注册表添加算法，或在 `pyproject.toml` 中的 `qumater.qsim.algorithms` 分组下导出入口点。手动注册示例如下：
 
 ```python
 from qumater.qsim.modules import AlgorithmModule, register_algorithm_module
@@ -177,48 +145,34 @@ register_algorithm_module(
 )
 ```
 
-Packages that rely on entry points can return an `AlgorithmModule` object or a
-callable receiving the registry and performing custom registration.
+若通过入口点机制，既可以直接返回 `AlgorithmModule` 对象，也可以返回接受注册表并执行自定义注册的可调用对象。
 
-## Testing & Quality Assurance
+## 测试与质量保障
 
-The project ships with a comprehensive pytest suite covering materials,
-Hamiltonians, variational ansätze, the algorithm registry, and all built-in
-algorithms.  Run the default suite via:
+项目自带全面的 pytest 套件，覆盖材料模块、哈密顿量、变分线路、算法注册表以及所有内置算法。执行默认测试命令：
 
 ```bash
 pytest
 ```
 
-Useful options:
+常用选项：
 
-- `pytest -vv` – verbose assertion output.
-- `pytest -k "grover"` – focus on a specific subset of tests.
-- `pytest --maxfail=1` – abort on first failure, useful for rapid iteration.
+- `pytest -vv` —— 输出更详细的断言信息。
+- `pytest -k "grover"` —— 聚焦特定子集的测试。
+- `pytest --maxfail=1` —— 首次失败即中止，便于快速迭代。
 
-All tests are deterministic and execute quickly on commodity hardware, making
-them suitable for CI pipelines and gated deployments.
+全部测试均为确定性设计，可在常规硬件上迅速完成，适合作为 CI 流水线或发布前的质量门禁。
 
-## Reproducing the README Examples
+## 复现实验输出
 
-To recreate the outputs documented in
-`reports/readme_examples_output.md`, execute the snippets from the
-[Quick Start](#quick-start) and [Built-in Algorithm Modules](#built-in-algorithm-modules)
-sections within an interactive Python session.  Updating the report with fresh
-results ensures the documentation always reflects the current behaviour of the
-codebase.
+若需重现 [`reports/readme_examples_output.md`](reports/readme_examples_output.md) 中的结果，请在交互式 Python 环境中运行 [快速上手](#快速上手) 与 [内置算法模块](#内置算法模块) 两节的代码片段。定期刷新报告有助于保持文档与当前代码行为一致。
 
-## Support & Contribution
+## 支持与贡献
 
-Contributions are welcome via pull requests.  Please accompany new features or
-bug fixes with tests and documentation updates.  Issues and feature requests can
-be filed through the repository's tracker.
+欢迎通过 Pull Request 贡献代码。新增功能或修复缺陷时，请同时补充测试与文档。若有问题或功能需求，可在仓库 Issue 区提交。
 
-For internal adoption, consider pinning QuMater's version in downstream
-`pyproject.toml` files or through a constraints file to guarantee reproducible
-builds.
+在内部环境中使用时，建议在下游 `pyproject.toml` 或约束文件中锁定 QuMater 的版本，以确保可重复的构建结果。
 
-## License
+## 许可证
 
-QuMater is distributed under the terms of the [MIT License](LICENSE).
-
+QuMater 依据 [MIT 许可证](LICENSE) 发布。

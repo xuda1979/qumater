@@ -1,8 +1,8 @@
-# Extended Quantum Algorithm Module Test Report
+# 量子算法模块扩展测试报告
 
-## Pytest Results
+## Pytest 结果
 
-Command: `pytest tests/test_algorithm_modules.py`
+命令：`pytest tests/test_algorithm_modules.py`
 
 ```
 ===================================================== test session starts ======================================================
@@ -16,15 +16,15 @@ tests/test_algorithm_modules.py ......                                          
 ====================================================== 6 passed in 0.48s =======================================================
 ```
 
-## Example Execution
+## 示例执行
 
-Command:
+命令：
 
 ```bash
 python example_custom_module.py
 ```
 
-Inlined command:
+嵌入式示例代码：
 
 ```python
 from qumater.materials import QuantumMaterialDatabase
@@ -37,12 +37,14 @@ from qumater.qsim import (
 )
 from qumater.qsim.modules import AlgorithmModule, register_algorithm_module
 
+
 class CustomAlgorithm:
     def __init__(self, parameter: float) -> None:
         self.parameter = parameter
 
     def run(self) -> float:
         return self.parameter ** 2
+
 
 register_algorithm_module(
     AlgorithmModule(
@@ -52,6 +54,7 @@ register_algorithm_module(
         keywords=("demo", "prototype"),
     )
 )
+
 
 db = QuantumMaterialDatabase.demo()
 summary = db.summary()
@@ -68,7 +71,7 @@ print("Custom algorithm output:", get_algorithm_registry().create("custom_algori
 print(summary)
 ```
 
-Output:
+输出：
 
 ```
 Final energy: 0.9999999999899957

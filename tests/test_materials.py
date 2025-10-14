@@ -31,7 +31,7 @@ def test_database_filter_allows_semantic_and_numeric_constraints():
     superconductors = db.filter(tags=["superconductor"], parameter_bounds={"Tc": (60.0, None)})
     assert [entry.name for entry in superconductors] == ["FeSe monolayer"]
 
-    # Open ended bounds should act as inclusive filters and exclude missing parameters.
+    # 开区间边界应视作包含端点的筛选条件，并排除缺失对应参数的条目。
     strongly_correlated = db.filter(parameter_bounds={"u": (4.0, 4.0)})
     assert [entry.name for entry in strongly_correlated] == ["Fermi-Hubbard 2x2"]
 
@@ -46,7 +46,7 @@ def test_summary_returns_serialisable_view():
     ]
     fe_se = summary[1]
     fe_se["parameters"]["Tc"] = 70.0
-    # The original entry should remain unchanged because the summary returns copies.
+    # 因为摘要返回的是拷贝，原始条目应保持不变。
     assert db.get("FeSe monolayer").parameters["Tc"] == 65.0
 
 

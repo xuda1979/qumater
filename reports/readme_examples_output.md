@@ -1,7 +1,7 @@
 # README 示例输出
 
-## Materials and VQE example
-### Material summary
+## 材料与 VQE 示例
+### 材料摘要
 ```json
 [
   {
@@ -45,30 +45,30 @@
   }
 ]
 ```
-### LowDepthVQE final energy
+### LowDepthVQE 最终能量
 `-1.000000000000`
-### Density expectation
+### 密度矩阵期望值
 `0.0`
-### Registry low_depth_vqe instantiation
+### 注册表 low_depth_vqe 实例化结果
 `True`
 
-## Built-in algorithm demonstrations
-### Grover search
-Most likely state: `5`
-Probabilities:
+## 内置算法示例
+### Grover 搜索
+最可能的计算基态：`5`
+概率分布：
 ```
 [0.0078125, 0.0078125, 0.0078125, 0.0078125, 0.0078125, 0.9453125,
  0.0078125, 0.0078125]
 ```
-### Quantum Fourier Transform
-Transformed amplitudes:
+### 量子傅里叶变换
+变换后的振幅：
 ```
 [0.5+0.j, 0.5+0.j, 0.5+0.j, 0.5+0.j]
 ```
-Inverse-transformed amplitudes:
+逆变换后的振幅：
 ```
 [1.+0.j, 0.+0.j, 0.+0.j, 0.+0.j]
 ```
-### Quantum Phase Estimation
-Estimated binary phase: `010`
-Estimated numeric phase: `0.25`
+### 量子相位估计
+估计得到的二进制相位：`010`
+对应的数值相位：`0.25`
