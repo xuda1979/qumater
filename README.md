@@ -94,6 +94,10 @@ print(phase_result.binary)  # '010'
 print(phase_result.phase)
 ```
 
+以上示例在项目根目录运行，最新一次执行的详细输出可在
+[`reports/readme_examples_output.txt`](reports/readme_examples_output.txt) 中查阅，
+便于核对随文注释与真实结果是否一致。
+
 ## 扩展量子算法模块
 
 `qumater.qsim.modules` 允许使用者轻松包装并分发新的量子算法：
