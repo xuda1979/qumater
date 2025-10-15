@@ -7,6 +7,7 @@ functionality is available from subpackages and the CLI; see
 
 from importlib import import_module as _import_module
 
-__all__ = ['materials', 'qsim']
+__all__ = ['materials', 'qsim', 'platform']
 materials = _import_module('qumater.materials')
 qsim = _import_module('qumater.qsim')
+platform = _import_module('qumater.platform')
