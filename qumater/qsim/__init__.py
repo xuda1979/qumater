@@ -10,7 +10,14 @@ from .algorithms import (
     QuantumFourierTransform,
     QuantumPhaseEstimation,
 )
+from .circuit_optimization import (
+    CircuitOptimisationResult,
+    CircuitOptimiser,
+    CircuitProfile,
+    GateSpec,
+)
 from .hamiltonian import PauliHamiltonian, PauliTerm, group_commuting_terms
+from .hybrid import HybridQuantumAISimulator, HybridSimulationReport, HybridSimulationStep
 from .modules import (
     AlgorithmModule,
     AlgorithmRegistry,
@@ -29,9 +36,16 @@ __all__ = [
     "PhaseEstimationResult",
     "QuantumFourierTransform",
     "QuantumPhaseEstimation",
+    "CircuitOptimisationResult",
+    "CircuitOptimiser",
+    "CircuitProfile",
+    "GateSpec",
     "PauliHamiltonian",
     "PauliTerm",
     "group_commuting_terms",
+    "HybridQuantumAISimulator",
+    "HybridSimulationReport",
+    "HybridSimulationStep",
     "AlgorithmModule",
     "AlgorithmRegistry",
     "ENTRY_POINT_GROUP",
