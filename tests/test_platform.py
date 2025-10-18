@@ -98,3 +98,19 @@ def test_platform_tasks_and_execution():
     assert schedule.total_groups == 1
     regressor = platform.fit_quantum_regressor([(np.array([0.0]), 1.0)], ansatz, hamiltonian)
     assert isinstance(regressor.predict([0.0]), float)
+
+
+def test_platform_circuit_optimisation_and_hybrid_simulation():
+    platform = QuantumSoftwarePlatform()
+    ansatz = HardwareAgnosticAnsatz(num_qubits=2, layers=1)
+    parameters = np.zeros(ansatz.parameter_count)
+    parameters[0] = 5e-4
+    optimisation = platform.optimise_ansatz_circuit(ansatz, parameters)
+    assert optimisation.original_profile.total_gates >= optimisation.optimised_profile.total_gates
+    assert optimisation.original_profile.depth >= optimisation.optimised_profile.depth
+
+    hamiltonian = PauliHamiltonian([PauliTerm(1.0, "ZZ")])
+    report = platform.run_hybrid_simulation(hamiltonian, ansatz, max_iterations=6)
+    assert len(report.steps) == 6
+    assert all(step.learning_rate > 0 for step in report.steps)
+    assert report.final_parameters.shape == (ansatz.parameter_count,)
