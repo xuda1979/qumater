@@ -22,6 +22,7 @@ def test_cli_runs_workflow(tmp_path, capsys):
     assert exit_code == 0
     assert "材料: LiH minimal basis" in captured.out
     assert "实用目标完成进度" in captured.out
+    assert "创新洞察" in captured.out
 
 
 def test_cli_supports_json_output(tmp_path, capsys):
@@ -45,6 +46,7 @@ def test_cli_supports_json_output(tmp_path, capsys):
     assert payload["material"]["name"] == "LiH minimal basis"
     assert payload["algorithm_name"] == "low_depth_vqe"
     assert payload["objective_summary"]
+    assert payload["innovation_insight"]["highlight"]
 
 
 def test_cli_writes_markdown_report(tmp_path, capsys):
@@ -74,3 +76,4 @@ def test_cli_writes_markdown_report(tmp_path, capsys):
     assert "报告已写入" in captured.out
     report_text = output_path.read_text(encoding="utf-8")
     assert "# QuMater 工作流报告" in report_text
+    assert "## 创新洞察" in report_text

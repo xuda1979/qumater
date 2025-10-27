@@ -9,6 +9,8 @@ from qumater.core import ObjectivePlanner, WorkflowConfig, default_objectives
 from qumater.materials import MaterialEntry, QuantumMaterialDatabase
 from qumater.qsim import HardwareAgnosticAnsatz, OptimizationHistory, get_algorithm_registry
 
+from .innovation import InnovationInsight, InnovationInsightEngine
+
 
 @dataclass
 class WorkflowReport:
@@ -22,6 +24,7 @@ class WorkflowReport:
     steps: List[str]
     objective_summary: Dict[str, Dict[str, float]]
     metadata: Dict[str, Any] = field(default_factory=dict)
+    innovation_insight: Optional[InnovationInsight] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON serialisable dictionary describing the report."""
@@ -50,6 +53,7 @@ class WorkflowReport:
             "steps": list(self.steps),
             "objective_summary": convert(self.objective_summary),
             "metadata": convert(self.metadata),
+            "innovation_insight": convert(self.innovation_insight),
         }
 
 
@@ -69,6 +73,7 @@ class QuantumWorkflow:
         self.registry = registry or get_algorithm_registry()
         self._planner = ObjectivePlanner(default_objectives())
         self._steps: List[str] = []
+        self._insight_engine = InnovationInsightEngine()
 
     @property
     def planner(self) -> ObjectivePlanner:
@@ -142,10 +147,21 @@ class QuantumWorkflow:
         self._steps.append("report")
 
         summary = self._planner.summary()
+        insight = self._insight_engine.evaluate(
+            material=material,
+            hamiltonian=hamiltonian,
+            ansatz=ansatz,
+            algorithm_name=self.config.algorithm.name,
+            algorithm_result=result,
+            objective_summary=summary,
+        )
         metadata = {
             "material_parameters": dict(material.parameters),
             "ansatz_parameter_count": ansatz.parameter_count,
             "config_metadata": dict(self.config.metadata),
+            "innovation_maturity": insight.maturity_level,
+            "value_highlight": insight.highlight,
+            "innovation_metrics": dict(insight.contributing_metrics),
         }
         return WorkflowReport(
             material=material,
@@ -156,6 +172,7 @@ class QuantumWorkflow:
             steps=list(self._steps),
             objective_summary=summary,
             metadata=metadata,
+            innovation_insight=insight,
         )
 
 
