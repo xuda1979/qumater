@@ -23,3 +23,8 @@ def test_quantum_workflow_executes_vqe():
     assert "material:LiH minimal basis" == report.steps[0]
     assert report.objective_summary["数据到模型的稳健流程"]["completed"] == 2.0
     assert report.metadata["config_metadata"]["experiment"] == "unit-test"
+
+    payload = report.to_dict()
+    assert payload["material"]["name"] == "LiH minimal basis"
+    assert payload["algorithm_result"]["converged"] in {True, False}
+    assert isinstance(payload["algorithm_result"]["energies"], list)

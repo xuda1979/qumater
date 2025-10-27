@@ -11,7 +11,7 @@ patterns and easily register themselves as modules via
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
 import numpy as np
 
@@ -27,6 +27,15 @@ class OptimizationHistory:
     parameters: List[np.ndarray]
     energies: List[float]
     converged: bool
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON serialisable representation of the optimisation trace."""
+
+        return {
+            "parameters": [parameter.tolist() for parameter in self.parameters],
+            "energies": [float(energy) for energy in self.energies],
+            "converged": bool(self.converged),
+        }
 
 
 @dataclass

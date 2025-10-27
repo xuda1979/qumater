@@ -1,9 +1,10 @@
 """High level workflow orchestration building on configuration primitives."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, is_dataclass
 from typing import Any, Dict, Iterable, List, Optional
 
+import numpy as np
 from qumater.core import ObjectivePlanner, WorkflowConfig, default_objectives
 from qumater.materials import MaterialEntry, QuantumMaterialDatabase
 from qumater.qsim import HardwareAgnosticAnsatz, OptimizationHistory, get_algorithm_registry
@@ -21,6 +22,35 @@ class WorkflowReport:
     steps: List[str]
     objective_summary: Dict[str, Dict[str, float]]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON serialisable dictionary describing the report."""
+
+        def convert(value: Any) -> Any:
+            if isinstance(value, OptimizationHistory):
+                return value.to_dict()
+            if isinstance(value, np.ndarray):
+                return value.tolist()
+            if is_dataclass(value):
+                return {key: convert(item) for key, item in asdict(value).items()}
+            if isinstance(value, dict):
+                return {key: convert(item) for key, item in value.items()}
+            if isinstance(value, (list, tuple)):
+                return [convert(item) for item in value]
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                return value
+            return repr(value)
+
+        return {
+            "material": convert(self.material),
+            "algorithm_name": self.algorithm_name,
+            "algorithm_result": convert(self.algorithm_result),
+            "final_energy": self.final_energy,
+            "converged": self.converged,
+            "steps": list(self.steps),
+            "objective_summary": convert(self.objective_summary),
+            "metadata": convert(self.metadata),
+        }
 
 
 class QuantumWorkflow:
