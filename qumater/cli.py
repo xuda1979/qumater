@@ -8,7 +8,7 @@ from typing import Any, Mapping, Optional
 
 from qumater.core import WorkflowConfig
 from qumater.qsim import OptimizationHistory
-from qumater.workflows import QuantumWorkflow
+from qumater.workflows import InnovationInsight, QuantumWorkflow
 
 try:  # Python 3.11+
     import tomllib
@@ -48,6 +48,16 @@ def _format_report_text(report, summary_text: str) -> str:
         status = "收敛" if report.converged else "未完全收敛"
         lines.append(f"最终能量: {report.final_energy:.6f} ({status})")
     lines.append(summary_text)
+    insight: InnovationInsight | None = getattr(report, "innovation_insight", None)
+    if insight is not None:
+        lines.append("创新洞察: " + insight.highlight)
+        lines.append(
+            "价值指标: "
+            f"差异化 {insight.differentiation_score:.2f}, 风险对冲 {insight.risk_reduction_score:.2f}, "
+            f"成熟度 {insight.maturity_level}"
+        )
+        if insight.recommendations:
+            lines.append("后续建议: " + "；".join(insight.recommendations))
     return "\n".join(lines)
 
 
@@ -77,6 +87,25 @@ def _format_report_markdown(report) -> str:
         else:
             formatted = value
         lines.append(f"- **{key}**: {formatted}")
+
+    insight: InnovationInsight | None = getattr(report, "innovation_insight", None)
+    if insight is not None:
+        lines.append("")
+        lines.append("## 创新洞察")
+        lines.append(f"- **价值亮点**: {insight.highlight}")
+        lines.append(
+            "- **差异化评分**: "
+            f"{insight.differentiation_score:.2f}"
+        )
+        lines.append(
+            "- **风险对冲评分**: "
+            f"{insight.risk_reduction_score:.2f}"
+        )
+        lines.append(f"- **成熟度评估**: {insight.maturity_level}")
+        if insight.recommendations:
+            lines.append("- **建议行动**:")
+            for item in insight.recommendations:
+                lines.append(f"  - {item}")
 
     result = report.algorithm_result
     if isinstance(result, OptimizationHistory):
