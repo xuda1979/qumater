@@ -14,8 +14,8 @@ def test_default_objectives_progress_tracking():
     planner.mark_completed("ansatz-construction")
 
     summary = planner.summary()
-    assert summary["数据到模型的稳健流程"]["completed"] == 1.0
-    assert summary["可演化的算法与编排"]["completed"] == 1.0
+    assert summary["Robust Data-to-Model Pipeline"]["completed"] == 1.0
+    assert summary["Evolvable Algorithms & Orchestration"]["completed"] == 1.0
     assert "material-catalogue-selection" in planner.completed_tasks()
 
 

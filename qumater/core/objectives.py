@@ -83,50 +83,50 @@ def default_objectives() -> List[PracticalObjective]:
 
     return [
         PracticalObjective(
-            name="数据到模型的稳健流程",
-            summary="确保材料数据、哈密顿量建模与线路生成形成闭环。",
+            name="Robust Data-to-Model Pipeline",
+            summary="Ensure a closed loop from material data and Hamiltonian modeling to circuit generation.",
             tasks=[
                 TaskDefinition(
                     name="material-catalogue-selection",
-                    description="从量子材料目录中筛选或获取目标样本。",
-                    category="数据准备",
+                    description="Filter or retrieve target samples from the quantum material catalogue.",
+                    category="Data Preparation",
                 ),
                 TaskDefinition(
                     name="hamiltonian-build",
-                    description="将配置化的 Pauli 项构造成可直接模拟的哈密顿量。",
-                    category="模型构建",
+                    description="Construct a directly simulatable Hamiltonian from configured Pauli terms.",
+                    category="Model Construction",
                 ),
             ],
         ),
         PracticalObjective(
-            name="可演化的算法与编排",
-            summary="搭建可维护、可扩展且可调试的算法执行栈。",
+            name="Evolvable Algorithms & Orchestration",
+            summary="Build a maintainable, extensible, and debuggable algorithm execution stack.",
             tasks=[
                 TaskDefinition(
                     name="ansatz-construction",
-                    description="依据配置创建硬件无关的变分线路。",
-                    category="量子线路",
+                    description="Create a hardware-agnostic variational circuit based on the configuration.",
+                    category="Quantum Circuits",
                 ),
                 TaskDefinition(
                     name="algorithm-instantiation",
-                    description="通过注册表实例化所需量子算法或工作流。",
-                    category="算法管理",
+                    description="Instantiate the required quantum algorithm or workflow via the registry.",
+                    category="Algorithm Management",
                 ),
                 TaskDefinition(
                     name="result-reporting",
-                    description="生成包含关键诊断指标的结构化汇总。",
-                    category="可观测性",
+                    description="Generate a structured summary containing key diagnostic metrics.",
+                    category="Observability",
                 ),
             ],
         ),
         PracticalObjective(
-            name="易用的操作界面",
-            summary="提供面向研究人员与工程师的一致化入口。",
+            name="User-Friendly Interface",
+            summary="Provide a unified entry point for researchers and engineers.",
             tasks=[
                 TaskDefinition(
                     name="interface-automation",
-                    description="通过 CLI 或 API 自动化执行并输出结果。",
-                    category="用户体验",
+                    description="Automate execution and output results via CLI or API.",
+                    category="User Experience",
                 )
             ],
         ),
