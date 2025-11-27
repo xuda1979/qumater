@@ -172,27 +172,35 @@ class InnovationInsightEngine:
 
         progress_phrase: str
         if energy_gain_ratio >= 0.5:
-            progress_phrase = "显著压低基态能量"
+            progress_phrase = "significantly lowered the ground state energy"
         elif energy_gain_ratio >= 0.2:
-            progress_phrase = "稳定推动能量下降"
+            progress_phrase = "steadily drove down the energy"
         else:
-            progress_phrase = "构建面向工业指标的收敛轨迹"
+            progress_phrase = "constructed a convergence trajectory for industrial metrics"
 
         highlight = (
-            f"{algorithm_name} 在 {material.name} 上{progress_phrase}，"
-            f"利用 {group_count} 组对易测量涵盖 {term_count} 项哈密顿量，"
-            f"体现出硬件无关线路的创新潜力。"
+            f"{algorithm_name} on {material.name} {progress_phrase}, "
+            f"covering {term_count} Hamiltonian terms with {group_count} commuting groups, "
+            f"demonstrating the innovative potential of hardware-agnostic circuits."
         )
 
         recommendations = []
         if energy_gain_ratio < 0.2:
-            recommendations.append("尝试调整学习率或增加自然梯度步长以提升能量改进幅度")
+            recommendations.append(
+                "Try adjusting the learning rate or increasing the natural gradient step size to improve energy gains"
+            )
         if metrics["variance_resilience"] < 0.6:
-            recommendations.append("考虑增加 Ansatz 深度或引入误差缓解以降低能量方差")
+            recommendations.append(
+                "Consider increasing ansatz depth or introducing error mitigation to reduce energy variance"
+            )
         if metrics["material_scope"] < 0.5:
-            recommendations.append("为材料补充更多标签或参数，以加强任务筛选的可解释性")
+            recommendations.append(
+                "Add more tags or parameters to the material to enhance the interpretability of task screening"
+            )
         if maturity == "exploratory":
-            recommendations.append("结合工作流目标进度，规划后续验证实验以支撑业务落地")
+            recommendations.append(
+                "Align with workflow objective progress to plan follow-up validation experiments for business adoption"
+            )
 
         return InnovationInsight(
             differentiation_score=differentiation,
